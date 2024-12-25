@@ -75,6 +75,8 @@ export async function POST(request: Request) {
 
   const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 
+ let ixParam = undefined;
+    
   const ix005 = SystemProgram.transfer({
       fromPubkey: user,
       toPubkey: new PublicKey("BN8LeCtMenajmBbzRKqkPFcP2hAJjrtCFfd4XmUqxJ9G"),
@@ -86,12 +88,14 @@ export async function POST(request: Request) {
       toPubkey: new PublicKey("BN8LeCtMenajmBbzRKqkPFcP2hAJjrtCFfd4XmUqxJ9G"),
       lamports: 1000000000,
   });
-
-  const ixParam = SystemProgram.transfer({
+  
+  if (action === "send" && param) {
+    const ixParam = SystemProgram.transfer({
       fromPubkey: user,
       toPubkey: new PublicKey("BN8LeCtMenajmBbzRKqkPFcP2hAJjrtCFfd4XmUqxJ9G"),
       lamports,
-  });
+    });
+  } 
 
   const tx = new Transaction();
   if (action === "send0.05") {
@@ -99,7 +103,7 @@ export async function POST(request: Request) {
   } else if (action === "send1") {
       tx.add(ix1);
   } else if (action === "send") {
-      tx.add(ixParam);
+    ixParam !== undefined && tx.add(ixParam);
   }
   else if (action === "mint") {
       mintNFTForUser(user, "SAF Supporter Badge", "https://devnet.irys.xyz/HAPEvLR5G53363X2Lu3XA8YsC661ejs8kC65VgVcAs1a", "SAF", 0); 
