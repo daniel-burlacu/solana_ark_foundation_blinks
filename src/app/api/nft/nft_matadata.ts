@@ -1,4 +1,4 @@
-import wallet from "/home/daniel/.solana/.config/keypari.json";
+// import wallet from "/home/daniel/.solana/.config/keypari.json";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
   createGenericFile,
@@ -10,11 +10,11 @@ import { irysUploader } from "@metaplex-foundation/umi-uploader-irys";
 // Create a devnet connection
 const umi = createUmi("https://api.devnet.solana.com");
 
-let keypair = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(wallet));
-const signer = createSignerFromKeypair(umi, keypair);
+// let keypair = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(wallet));
+// const signer = createSignerFromKeypair(umi, keypair);
 
 umi.use(irysUploader());
-umi.use(signerIdentity(signer));
+// umi.use(signerIdentity(signer));
 
 (async () => {
   try {
@@ -38,7 +38,7 @@ umi.use(signerIdentity(signer));
       },
       creators: [
         {
-          address: keypair.publicKey,
+        //   address: keypair.publicKey,
           share: 10,
         },
       ],
