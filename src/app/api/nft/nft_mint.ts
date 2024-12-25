@@ -1,4 +1,5 @@
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import * as fs from 'fs';
 import { createSignerFromKeypair, signerIdentity, generateSigner, percentAmount } from "@metaplex-foundation/umi";
 import { createNft, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import { PublicKey } from "@solana/web3.js";
@@ -17,36 +18,45 @@ const umi = createUmi(RPC_ENDPOINT);
  * @param {number} fee - The seller fee basis points (as a percentage, e.g., 2 for 2%).
  * @returns {Promise<{signature: string, mintAddress: string}>} - The transaction signature and mint address.
  */
-export async function mintNFTForUser(user: PublicKey, name: string, uri: string, symbol: string, fee: number = 0): Promise<{ signature: string; mintAddress: string; }> {
+export async function mintNFTForUser(
+    user: PublicKey,
+    name: string,
+    uri: string,
+    symbol: string,
+    fee: number = 0
+): Promise<{ signature: string; mintAddress: string; }> {
     try {
-        // Load the keypair for the signer
-        const keypair = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(wallet));
+        const walletPath = "/home/daniel/.solana/.config/keypari.json";
+        const walletData = fs.readFileSync(walletPath, "utf-8");
+        const secretKeyArray = JSON.parse(walletData);
+
+        if (!Array.isArray(secretKeyArray) || secretKeyArray.length !== 64) {
+            throw new Error("Invalid keypair file. Ensure it contains a valid 64-byte secret key.");
+        }
+
+        const secretKey = new Uint8Array(secretKeyArray);
+        const keypair = umi.eddsa.createKeypairFromSecretKey(secretKey);
         const signer = createSignerFromKeypair(umi, keypair);
 
-        // Set the signer identity
         umi.use(signerIdentity(signer));
         umi.use(mplTokenMetadata());
 
-        // Generate the mint keypair for the NFT
         const mint = generateSigner(umi);
         const sellerFeeBasisPoints = percentAmount(fee, 2);
 
-        // Adjust URI for devnet testing
         const adjustedUri = uri.replace("arweave.net", "devnet.irys.xyz");
 
-        // Create the NFT
         const tx = createNft(umi, {
             mint,
             name,
             symbol,
             uri: adjustedUri,
             sellerFeeBasisPoints,
+            updateAuthority: signer,
         });
 
-        // Send and confirm the transaction
         const result = await tx.sendAndConfirm(umi);
 
-        // Get the transaction signature and mint address
         const signature = base58.encode(result.signature);
         console.log(`Successfully Minted! Check out your TX here:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
         console.log("Mint Address: ", mint.publicKey);
@@ -60,6 +70,7 @@ export async function mintNFTForUser(user: PublicKey, name: string, uri: string,
         throw error;
     }
 }
+
 
 // import { createUmi } from "@metaplex-foundation/umi-bundle-defaults"
 // import { createSignerFromKeypair, signerIdentity, generateSigner, percentAmount } from "@metaplex-foundation/umi"

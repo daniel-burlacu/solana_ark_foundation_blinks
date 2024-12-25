@@ -1,6 +1,6 @@
-import { Action, ActionGetResponse, ActionPostRequest, ActionPostResponse, ACTIONS_CORS_HEADERS, CompletedAction } from "@solana/actions";
+import { Action, ActionGetResponse, ActionPostRequest, ActionPostResponse,  CompletedAction } from "@solana/actions";
 import { clusterApiUrl, Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction} from "@solana/web3.js"
-import { DEFAULT_SOL_ADDRESS, DEFAULT_SOL_AMOUNT } from "./const";
+import { ACTIONS_CORS_HEADERS} from "./const";
 import { mintNFTForUser } from "../nft/nft_mint";
 
 let transactionCompleted = false; // Global boolean state
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       tx.add(ixParam);
   }
   else if (action === "mint") {
-      mintNFTForUser(user, "SAF Supporter Badge", "https://devnet.irys.xyz/8SFowjVLrp37HKVzdjBbrt8etXLMnSDaZwwKqt3rFsN9", "SAF", 0); 
+      mintNFTForUser(user, "SAF Supporter Badge", "https://devnet.irys.xyz/HAPEvLR5G53363X2Lu3XA8YsC661ejs8kC65VgVcAs1a", "SAF", 0); 
       transactionCompleted = false;
     }
    else {
