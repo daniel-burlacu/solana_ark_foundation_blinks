@@ -1,10 +1,11 @@
-import { Action, ActionGetResponse, ActionPostRequest, ActionPostResponse,  CompletedAction } from "@solana/actions";
+import { Action, ActionGetResponse, ActionPostRequest, ActionPostResponse,  CompletedAction, createActionHeaders } from "@solana/actions";
 import { clusterApiUrl, Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction} from "@solana/web3.js"
 import { ACTIONS_CORS_HEADERS} from "./const";
 import { mintNFTForUser } from "../nft/nft_mint";
 
-let transactionCompleted = false; // Global boolean state
 
+let transactionCompleted = false; // Global boolean state
+const headers = createActionHeaders();
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
 
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
             },
         };
 
-  return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
+  return Response.json(responseBody, headers);
 }
 
 
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
   });
   
   if (action === "send" && param) {
-    const ixParam = SystemProgram.transfer({
+    ixParam = SystemProgram.transfer({
       fromPubkey: user,
       toPubkey: new PublicKey("BN8LeCtMenajmBbzRKqkPFcP2hAJjrtCFfd4XmUqxJ9G"),
       lamports,
@@ -110,7 +111,7 @@ export async function POST(request: Request) {
       transactionCompleted = false;
     }
    else {
-      return Response.json("400", { headers: ACTIONS_CORS_HEADERS });
+      return Response.json("400", headers);
   }
 
   tx.feePayer = user;
@@ -156,10 +157,10 @@ export async function POST(request: Request) {
               },
           };
 
-          return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
+          return Response.json(responseBody, headers);
       }
   } catch (error) {
-      return Response.json({ error: "Transaction error", details: (error as any).message }, { headers: ACTIONS_CORS_HEADERS });
+      return Response.json({ error: "Transaction error", details: (error as any).message }, headers);
   }
 
   const responseBody: ActionPostResponse = {
@@ -168,20 +169,11 @@ export async function POST(request: Request) {
       message: "Transaction completed.",
   };
 
-  return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
+  return Response.json(responseBody, headers);
 }
 
 export async function OPTIONS(request: Request) {
-  return new Response(null, {
-      headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",
-          "Access-Control-Max-Age": "86400",
-          "X-Action-Version": "1",
-          "X-Blockchain-Ids": "solana:devnet",
-      },
-  });
+  return new Response(null, headers);
 }
 
 
