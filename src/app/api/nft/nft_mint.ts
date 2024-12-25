@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { createSignerFromKeypair, signerIdentity, generateSigner, percentAmount } from "@metaplex-foundation/umi";
 import { createNft, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import { PublicKey } from "@solana/web3.js";
-import wallet from "/home/daniel/.solana/.config/keypari.json";
+// import wallet from "/home/daniel/.solana/.config/keypari.json";
 import base58 from "bs58";
 
 const RPC_ENDPOINT = "https://api.devnet.solana.com";
