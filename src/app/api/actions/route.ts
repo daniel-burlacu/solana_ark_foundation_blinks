@@ -167,10 +167,16 @@ export async function POST(request: Request) {
   return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
 }
 
-
-
 export async function OPTIONS(request: Request) {
-    return new Response(null, { headers: ACTIONS_CORS_HEADERS });
+  // Respond to the preflight request with CORS headers
+  return new Response(null, {
+      headers: {
+          "Access-Control-Allow-Origin": "*", // Replace "*" with the specific origin if needed
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          "Access-Control-Max-Age": "86400", // Cache the preflight response for 24 hours
+      },
+  });
 }
 
 // function validatedQueryParams(requestUrl: URL) {
