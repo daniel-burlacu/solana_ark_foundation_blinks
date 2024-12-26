@@ -71,14 +71,7 @@ export async function POST(request: Request) {
   const param = url.searchParams.get("amount");
 
   const amountInSOL = parseFloat(param || "0");
-
-  if (isNaN(amountInSOL) || amountInSOL <= 0) {
-    return new Response("Invalid amount", {
-        status: 400,
-        headers: ACTIONS_CORS_HEADERS ,
-    });
-}
-
+  
   const lamports = Math.round(amountInSOL * LAMPORTS_PER_SOL);
   const user = new PublicKey(userPubkey);
 
