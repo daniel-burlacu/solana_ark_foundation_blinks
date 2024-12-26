@@ -75,11 +75,7 @@ export async function POST(request: Request) {
   if (isNaN(amountInSOL) || amountInSOL <= 0) {
     return new Response("Invalid amount", {
         status: 400,
-        headers: {
-            ...ACTIONS_CORS_HEADERS,
-            "X-Action-Version": "1",
-            "X-Blockchain-Ids": "solana:devnet",
-        },
+        headers: ACTIONS_CORS_HEADERS ,
     });
 }
 
@@ -169,18 +165,10 @@ export async function POST(request: Request) {
               },
           };
 
-          return Response.json(responseBody, { headers: {
-            ...ACTIONS_CORS_HEADERS,
-            "X-Action-Version": "1",
-            "X-Blockchain-Ids": "solana:devnet",
-        }, });
+          return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
       }
   } catch (error) {
-      return Response.json({ error: "Transaction error", details: (error as any).message }, { headers: {
-        ...ACTIONS_CORS_HEADERS,
-        "X-Action-Version": "1",
-        "X-Blockchain-Ids": "solana:devnet",
-    }, });
+      return Response.json({ error: "Transaction error", details: (error as any).message }, { headers: ACTIONS_CORS_HEADERS });
   }
 
   const responseBody: ActionPostResponse = {
@@ -189,11 +177,7 @@ export async function POST(request: Request) {
       message: "Transaction completed.",
   };
 
-  return Response.json(responseBody, { headers: {
-    ...ACTIONS_CORS_HEADERS,
-    "X-Action-Version": "1",
-    "X-Blockchain-Ids": "solana:devnet",
-}, });
+  return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
 }
 
 export const OPTIONS = async () => Response.json(null, { headers: ACTIONS_CORS_HEADERS });
