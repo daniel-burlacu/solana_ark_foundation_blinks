@@ -10,14 +10,15 @@ export const DEFAULT_SOL_ADDRESS: PublicKey = new PublicKey(
 //   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 // };
 
-const CLUSTER = process.env.NEXT_PUBLIC_CLUSTER || "devnet"; // Use "mainnet" for production
+// const CLUSTER = process.env.NEXT_PUBLIC_CLUSTER || "devnet"; // Use "mainnet" for production
 export const ACTIONS_CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Max-Age": "86400",
   "X-Action-Version": "1",
-  "X-Blockchain-Ids": `solana:${CLUSTER}`, // Dynamically set based on the cluster
+  "chainId":"devnet"
+ // "X-Blockchain-Ids": `solana:${CLUSTER}`, // Dynamically set based on the cluster
 };
 
 
