@@ -125,14 +125,44 @@ export async function POST(request: Request) {
   } else if (action === "send") {
     tx.add(ixParam);
   } else if (action === "mint") {
-    await mintNFTForUser(
-      user,
-      "SAF Supporter Badge",
-      "https://devnet.irys.xyz/HAPEvLR5G53363X2Lu3XA8YsC661ejs8kC65VgVcAs1a",
-      "SAF",
-      0
-    );
-    transactionCompleted = false;
+    try {
+      await mintNFTForUser(
+        user,
+        "SAF Supporter Badge",
+        "https://devnet.irys.xyz/HAPEvLR5G53363X2Lu3XA8YsC661ejs8kC65VgVcAs1a",
+        "SAF",
+        0
+      );
+  
+      const responseBody: ActionPostResponse = {
+        type: "transaction",
+        transaction: "Mint process initiated.",
+        message: "NFT minting completed successfully!",
+      };
+  
+      return new Response(JSON.stringify(responseBody), {
+        headers: {
+          ...ACTIONS_CORS_HEADERS,
+          "X-Action-Version": "1",
+          "X-Blockchain-Ids": "solana:devnet",
+        },
+      });
+    } catch (error) {
+      return new Response(
+        JSON.stringify({
+          error: "Minting error",
+          details: (error as Error).message,
+        }),
+        {
+          status: 500,
+          headers: {
+            ...ACTIONS_CORS_HEADERS,
+            "X-Action-Version": "1",
+            "X-Blockchain-Ids": "solana:devnet",
+          },
+        }
+      );
+    }
   } else {
     return Response.json("400", { headers: ACTIONS_CORS_HEADERS });
   }
