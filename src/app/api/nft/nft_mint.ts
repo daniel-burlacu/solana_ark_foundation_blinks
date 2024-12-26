@@ -2,9 +2,11 @@ import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import * as fs from 'fs';
 import { createSignerFromKeypair, signerIdentity, generateSigner, percentAmount } from "@metaplex-foundation/umi";
 import { createNft, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Transaction, TransactionInstruction, Connection, clusterApiUrl } from "@solana/web3.js";
 // import wallet from "/home/daniel/.solana/.config/keypari.json";
 import base58 from "bs58";
+import { ActionPostResponse } from "@solana/actions-spec";
+import { ACTIONS_CORS_HEADERS } from "../actions/const";
 
 const RPC_ENDPOINT = "https://api.devnet.solana.com";
 const umi = createUmi(RPC_ENDPOINT);
@@ -25,96 +27,67 @@ export async function mintNFTForUser(
     symbol: string,
     fee: number = 0
 ): Promise<{ signature: string; mintAddress: string; }> {
+    const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+
     try {
-        const walletPath = "/home/daniel/.solana/.config/keypari.json";
-        const walletData = fs.readFileSync(walletPath, "utf-8");
-        const secretKeyArray = JSON.parse(walletData);
+        // const walletPath = "/home/daniel/.solana/.config/keypari.json";
+        // const walletData = fs.readFileSync(walletPath, "utf-8");
+        // const secretKeyArray = JSON.parse(walletData);
 
-        if (!Array.isArray(secretKeyArray) || secretKeyArray.length !== 64) {
-            throw new Error("Invalid keypair file. Ensure it contains a valid 64-byte secret key.");
-        }
+        // if (!Array.isArray(secretKeyArray) || secretKeyArray.length !== 64) {
+        //     throw new Error("Invalid keypair file. Ensure it contains a valid 64-byte secret key.");
+        // }
 
-        const secretKey = new Uint8Array(secretKeyArray);
-        const keypair = umi.eddsa.createKeypairFromSecretKey(secretKey);
-        const signer = createSignerFromKeypair(umi, keypair);
+        // const secretKey = new Uint8Array(secretKeyArray);
+        // const keypair = umi.eddsa.createKeypairFromSecretKey(secretKey);
+        // const signer = createSignerFromKeypair(umi, keypair);
 
-        umi.use(signerIdentity(signer));
+        umi.use(mplTokenMetadata());
+        const sellerFeeBasisPoints = percentAmount(fee, 2);
+
+       // umi.use(signerIdentity(signer));
         umi.use(mplTokenMetadata());
 
         const mint = generateSigner(umi);
-        const sellerFeeBasisPoints = percentAmount(fee, 2);
+       
 
         const adjustedUri = uri.replace("arweave.net", "devnet.irys.xyz");
 
-        const tx = createNft(umi, {
+         const nftInstruction = createNft(umi, {
             mint,
             name,
             symbol,
             uri: adjustedUri,
             sellerFeeBasisPoints,
-            updateAuthority: signer,
+            updateAuthority: mint, // Use mint as the initial update authority
         });
 
-        const result = await tx.sendAndConfirm(umi);
+       // Convert TransactionBuilder into a Web3.js Transaction
+       const tx = new Transaction();
+       const instructions = nftInstruction.getInstructions().map(instruction => {
+           return new TransactionInstruction({
+               keys: instruction.keys.map(key => ({
+                   pubkey: new PublicKey(key.pubkey),
+                   isSigner: key.isSigner,
+                   isWritable: key.isWritable,
+               })),
+               programId: new PublicKey(instruction.programId),
+               data: Buffer.from(instruction.data),
+           });
+       });
+       tx.add(...instructions);
 
-        const signature = base58.encode(result.signature);
-        console.log(`Successfully Minted! Check out your TX here:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
-        console.log("Mint Address: ", mint.publicKey);
-
-        return {
-            signature,
-            mintAddress: mint.publicKey,
-        };
+        // Set fee payer and blockhash
+        tx.feePayer = user;
+        const bh = (await connection.getLatestBlockhash({ commitment: "finalized" }))
+        .blockhash;
+        tx.recentBlockhash = bh;
+        const serialTx = tx.serialize({ requireAllSignatures: false, verifySignatures: false })
+    .toString("base64");
+        // Return a mock result for now
+        return { signature: serialTx, mintAddress: mint.publicKey };
     } catch (error) {
         console.error("Error minting NFT:", error);
         throw error;
     }
 }
-
-
-// import { createUmi } from "@metaplex-foundation/umi-bundle-defaults"
-// import { createSignerFromKeypair, signerIdentity, generateSigner, percentAmount } from "@metaplex-foundation/umi"
-// import { createNft, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
-
-// import wallet from "/home/daniel/.solana/.config/keypari.json";
-// import base58 from "bs58";
-
-// const RPC_ENDPOINT = "https://api.devnet.solana.com";
-// const umi = createUmi(RPC_ENDPOINT);
-
-// let keypair = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(wallet));
-
-// const myKeypairSigner = createSignerFromKeypair(umi, keypair);
-// umi.use(signerIdentity(myKeypairSigner));
-// umi.use(mplTokenMetadata())
-
-// const mint = generateSigner(umi);
-// const sellerFeeBasisPoints = percentAmount(0, 2);
-
-// const name = "Solana Ark Foundation Supporter Badge";
-// let uri = "https://arweave.net/29gGS3ZEDqv9PBwrm5KFUfwuhZrRGKXoSx7N9xuq6vWA";
-
-
-// uri = uri.replace("arweave.net", "devnet.irys.xyz"); 
-
-// const symbol = "SAF";
-// // const description = "Dogpound Charity NFT - A Sol for a Bone !";
-// // const image = "https://arweave.net/zpBs5PJR2eVwT2hGoMZg9aFbBu2MEYuKRwGnHkX3eAb";
-// (async () => {
-//     let tx = createNft(
-//         umi, 
-//         {
-//           mint,
-//           name,
-//           symbol,
-//           uri,
-//           sellerFeeBasisPoints,
-//         },
-//     )
-//     let result = await tx.sendAndConfirm(umi);
-//     const signature = base58.encode(result.signature);
-    
-//     console.log(`Succesfully Minted! Check out your TX here:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`)
-
-//     console.log("Mint Address: ", mint.publicKey);
-// })();
