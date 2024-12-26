@@ -182,8 +182,6 @@ export async function POST(request: Request) {
       };
 
       return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
-    }else{
-      return Response.json("400", { headers: ACTIONS_CORS_HEADERS });
     }
   } catch (error) {
     return Response.json(
