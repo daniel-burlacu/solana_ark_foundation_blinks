@@ -198,7 +198,9 @@ export async function POST(request: Request) {
 
   return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
 }
-export const OPTIONS = GET;
+export const OPTIONS = async (req: Request) => {
+  return new Response(null, { headers: ACTIONS_CORS_HEADERS }); // CORS headers here
+};
 // export const OPTIONS = async () =>
 //   Response.json(null, { headers: ACTIONS_CORS_HEADERS });
 
