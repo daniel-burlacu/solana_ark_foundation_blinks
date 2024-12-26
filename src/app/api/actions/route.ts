@@ -141,11 +141,7 @@ export async function POST(request: Request) {
       };
   
       return new Response(JSON.stringify(responseBody), {
-        headers: {
-          ...ACTIONS_CORS_HEADERS,
-          "X-Action-Version": "1",
-          "X-Blockchain-Ids": "solana:devnet",
-        },
+        headers: ACTIONS_CORS_HEADERS ,
       });
     } catch (error) {
       return new Response(
@@ -155,11 +151,7 @@ export async function POST(request: Request) {
         }),
         {
           status: 500,
-          headers: {
-            ...ACTIONS_CORS_HEADERS,
-            "X-Action-Version": "1",
-            "X-Blockchain-Ids": "solana:devnet",
-          },
+          headers: ACTIONS_CORS_HEADERS ,
         }
       );
     }
