@@ -172,17 +172,7 @@ export async function POST(request: Request) {
   return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
 }
 
-export async function OPTIONS(request: Request) {
-
-  const responseBody: ActionPostResponse = {
-    type: "post",
-    // transaction: "", // Add a valid transaction string here
-    message: "Transaction completed.",
-};
-
-  return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
-}
-
+export const OPTIONS = async () => Response.json(null, { headers: ACTIONS_CORS_HEADERS });
 
 // function validatedQueryParams(requestUrl: URL) {
 //   let toPubkey: PublicKey = DEFAULT_SOL_ADDRESS;
