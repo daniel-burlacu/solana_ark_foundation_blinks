@@ -125,7 +125,6 @@ export async function POST(request: Request) {
   } else if (action === "send") {
     tx.add(ixParam);
   } else if (action === "mint") {
-    try{
     await mintNFTForUser(
       user,
       "SAF Supporter Badge",
@@ -134,21 +133,6 @@ export async function POST(request: Request) {
       0
     );
     transactionCompleted = false;
-
-    const responseBody: ActionPostResponse = {
-      type: "transaction",
-      transaction: "Mint process initiated.", // Adjust as needed
-      message: "NFT minting completed successfully!",
-    };
-
-    return Response.json(responseBody,  { headers: ACTIONS_CORS_HEADERS });
-
-  } catch (error) {
-    return Response.json(
-      { error: "Transaction error", details: (error as any).message },
-      { headers: ACTIONS_CORS_HEADERS }
-    );
-  }
   } else {
     return Response.json("400", { headers: ACTIONS_CORS_HEADERS });
   }
