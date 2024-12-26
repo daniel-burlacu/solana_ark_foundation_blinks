@@ -198,9 +198,9 @@ export async function POST(request: Request) {
 
   return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
 }
-
-export const OPTIONS = async () =>
-  Response.json(null, { headers: ACTIONS_CORS_HEADERS });
+export const OPTIONS = GET;
+// export const OPTIONS = async () =>
+//   Response.json(null, { headers: ACTIONS_CORS_HEADERS });
 
 // function validatedQueryParams(requestUrl: URL) {
 //   let toPubkey: PublicKey = DEFAULT_SOL_ADDRESS;
