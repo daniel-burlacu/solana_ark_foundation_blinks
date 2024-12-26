@@ -91,7 +91,7 @@ export async function POST(request: Request) {
   });
   
   if (action === "send" && param) {
-    ixParam = SystemProgram.transfer({
+     ixParam = SystemProgram.transfer({
       fromPubkey: user,
       toPubkey: new PublicKey("BN8LeCtMenajmBbzRKqkPFcP2hAJjrtCFfd4XmUqxJ9G"),
       lamports,
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
       transactionCompleted = false;
     }
    else {
-      return Response.json("400", headers);
+      return Response.json("400", { headers: ACTIONS_CORS_HEADERS });
   }
 
   tx.feePayer = user;
@@ -157,10 +157,10 @@ export async function POST(request: Request) {
               },
           };
 
-          return Response.json(responseBody, headers);
+          return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
       }
   } catch (error) {
-      return Response.json({ error: "Transaction error", details: (error as any).message }, headers);
+      return Response.json({ error: "Transaction error", details: (error as any).message }, { headers: ACTIONS_CORS_HEADERS });
   }
 
   const responseBody: ActionPostResponse = {
@@ -169,11 +169,18 @@ export async function POST(request: Request) {
       message: "Transaction completed.",
   };
 
-  return Response.json(responseBody, headers);
+  return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
 }
 
 export async function OPTIONS(request: Request) {
-  return new Response(null, headers);
+
+  const responseBody: ActionPostResponse = {
+    type: "post",
+    // transaction: "", // Add a valid transaction string here
+    message: "Transaction completed.",
+};
+
+  return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
 }
 
 
