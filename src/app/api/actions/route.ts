@@ -4,6 +4,7 @@ import {
   ActionPostRequest,
   ActionPostResponse,
   CompletedAction,
+  createActionHeaders,
 } from "@solana/actions";
 import {
   clusterApiUrl,
@@ -199,7 +200,9 @@ export async function POST(request: Request) {
   return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
 }
 export const OPTIONS = async (req: Request) => {
-  return new Response(null, { headers: ACTIONS_CORS_HEADERS }); // CORS headers here
+  const headers = createActionHeaders();
+  
+  return new Response(null, { headers }); // CORS headers here
 };
 // export const OPTIONS = async () =>
 //   Response.json(null, { headers: ACTIONS_CORS_HEADERS });
