@@ -70,14 +70,16 @@ export async function POST(request: Request) {
   const action = url.searchParams.get("action");
   const param = url.searchParams.get("amount");
 
+  if((param === undefined || param === "0" || param === "") && action === "send") {
+    return Response.json("400", { headers: ACTIONS_CORS_HEADERS });
+  }
+
   const amountInSOL = parseFloat(param || "0");
   
   const lamports = Math.round(amountInSOL * LAMPORTS_PER_SOL);
   const user = new PublicKey(userPubkey);
 
   const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-
- let ixParam = undefined;
     
   const ix005 = SystemProgram.transfer({
       fromPubkey: user,
@@ -91,15 +93,14 @@ export async function POST(request: Request) {
       lamports: 1000000000,
   });
   
-  if (action === "send" && param) {
-     ixParam = SystemProgram.transfer({
+  const ixParam = SystemProgram.transfer({
       fromPubkey: user,
       toPubkey: new PublicKey("BN8LeCtMenajmBbzRKqkPFcP2hAJjrtCFfd4XmUqxJ9G"),
       lamports,
-    });
-  } 
-
+  });
+  
   const tx = new Transaction();
+
   if (action === "send0.05") {
       tx.add(ix005);
   } else if (action === "send1") {
@@ -119,7 +120,6 @@ export async function POST(request: Request) {
   const bh = (await connection.getLatestBlockhash({ commitment: "finalized" })).blockhash;
   tx.recentBlockhash = bh;
   const serialTx = tx.serialize({ requireAllSignatures: false, verifySignatures: false }).toString("base64");
-
 
   try {
       // Simulate transaction processing
