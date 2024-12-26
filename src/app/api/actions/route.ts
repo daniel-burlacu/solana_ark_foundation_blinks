@@ -59,7 +59,7 @@ export async function GET(request: Request) {
               type: "transaction",
               label: "Send Sol",
               href:
-                requestUrl.origin + "/api/actions?action=send&amount=0.1",
+                requestUrl.origin + "/api/actions?action=send&amount={amount}",
               parameters: [
                 {
                   name: "amount",
