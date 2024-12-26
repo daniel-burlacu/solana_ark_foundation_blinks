@@ -71,6 +71,18 @@ export async function POST(request: Request) {
   const param = url.searchParams.get("amount");
 
   const amountInSOL = parseFloat(param || "0");
+
+  if (isNaN(amountInSOL) || amountInSOL <= 0) {
+    return new Response("Invalid amount", {
+        status: 400,
+        headers: {
+            ...ACTIONS_CORS_HEADERS,
+            "X-Action-Version": "1",
+            "X-Blockchain-Ids": "solana:devnet",
+        },
+    });
+}
+
   const lamports = Math.round(amountInSOL * LAMPORTS_PER_SOL);
   const user = new PublicKey(userPubkey);
 
@@ -157,10 +169,18 @@ export async function POST(request: Request) {
               },
           };
 
-          return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
+          return Response.json(responseBody, { headers: {
+            ...ACTIONS_CORS_HEADERS,
+            "X-Action-Version": "1",
+            "X-Blockchain-Ids": "solana:devnet",
+        }, });
       }
   } catch (error) {
-      return Response.json({ error: "Transaction error", details: (error as any).message }, { headers: ACTIONS_CORS_HEADERS });
+      return Response.json({ error: "Transaction error", details: (error as any).message }, { headers: {
+        ...ACTIONS_CORS_HEADERS,
+        "X-Action-Version": "1",
+        "X-Blockchain-Ids": "solana:devnet",
+    }, });
   }
 
   const responseBody: ActionPostResponse = {
@@ -169,7 +189,11 @@ export async function POST(request: Request) {
       message: "Transaction completed.",
   };
 
-  return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
+  return Response.json(responseBody, { headers: {
+    ...ACTIONS_CORS_HEADERS,
+    "X-Action-Version": "1",
+    "X-Blockchain-Ids": "solana:devnet",
+}, });
 }
 
 export const OPTIONS = async () => Response.json(null, { headers: ACTIONS_CORS_HEADERS });
