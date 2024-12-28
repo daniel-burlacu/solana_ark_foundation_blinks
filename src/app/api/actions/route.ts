@@ -18,14 +18,29 @@ import {
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
+import { 
+  // Keypairs
+  fromWeb3JsKeypair, toWeb3JsKeypair,
+  // Publickey
+  fromWeb3JsPublicKey, toWeb3JsPublicKey,
+  // Instructions
+  fromWeb3JsInstruction, toWeb3JsInstruction,
+  // Legacy Transactions
+  fromWeb3JsLegacyTransaction, toWeb3JsLegacyTransaction,
+  // Versioned Transactions
+  fromWeb3JsTransaction, toWeb3JsTransaction, 
+  // Messages
+  fromWeb3JsMessage, toWeb3JsMessage, toWeb3JsMessageFromInput
+} from '@metaplex-foundation/umi-web3js-adapters';
 import { ACTIONS_CORS_HEADERS } from "./const";
+import wallet from "/home/daniel/.solana/.config/keypari.json";
 // import { mintNFTForUser } from "../nft/nft_mint_wallet";
 import { mintNFTForUser } from "../nft/nft_mint";
-import { createUmi } from "@metaplex-foundation/umi-bundle-defaults"
-import { createNoopSigner , publicKey } from "@metaplex-foundation/umi"
-import { createNft, Key, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
+import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
+import { createNoopSigner , createSignerFromKeypair, publicKey, transactionBuilder } from "@metaplex-foundation/umi"
+import { createNft, InstructionNotSupportedError, Key, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import { generateSigner, percentAmount, signerIdentity } from "@metaplex-foundation/umi";
-import { base58 } from "@metaplex-foundation/umi/serializers";
+import base58 from "bs58";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 let transactionCompleted = false; // Global boolean state
@@ -109,8 +124,18 @@ export async function POST(request: Request) {
   const umi = createUmi(RPC_ENDPOINT);
 
   // Create a no-op signer using the user's public key
-  const signer = createNoopSigner(publicKey(userPubkey.toBase58()));
-  umi.use(signerIdentity(signer));
+  const umiPublicKey = publicKey(userPubkey.toBase58());
+  const signer = createNoopSigner(umiPublicKey);
+  // let keypair = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(wallet));
+  // const signer = createSignerFromKeypair(umi, keypair);
+  umi.use(
+    signerIdentity({
+        publicKey: publicKey(signer),
+        signTransaction: async (tx) => tx,
+        signMessage: async (data) => data,
+        signAllTransactions: async (txs) => txs,
+    })
+);
   umi.use(mplTokenMetadata());
 
   const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
@@ -141,7 +166,6 @@ export async function POST(request: Request) {
   } else if (action === "mint") {
     try {
       console.log("Minting NFT using UMI...");
-      console.log("Transaction: ", tx);
      
       const mint = generateSigner(umi);
       const sellerFeeBasisPoints = percentAmount(0, 2);
@@ -154,11 +178,25 @@ export async function POST(request: Request) {
         sellerFeeBasisPoints,
       });
 
-      const nftInstructions = nftBuilder.getInstructions();
-      console.log("TX Instructions: ", tx.instructions);
-      console.log("NFT Instructions: ", nftInstructions);
+      //working code, if set to createNoopSigner there will be no signer to perform the transaction
+      // I need somehow to sign it with the wallet, so I need a transaction here
+      // let result = await nftBuilder.sendAndConfirm(umi);
+      // const signature = base58.encode(result.signature);
 
-      nftInstructions.forEach((instruction, index) => {
+       const nftInstructions = nftBuilder.getInstructions();
+
+       console.log("NFT Instructions: ", nftInstructions);
+
+      // Convert the instructions to Web3.js format
+      const web3jsNftInstructions = nftInstructions.map(toWeb3JsInstruction);
+      console.log("Web3JS NFT Instructions: ", web3jsNftInstructions);
+
+      // Convert the instructions back to UMI format
+      // const nftInstructionsFromWeb3Js = web3jsNftInstructions.map(fromWeb3JsInstruction);
+      // console.log("NFT Instructions from Web3JS: ", nftInstructionsFromWeb3Js);
+
+      // Add the instructions to the transaction
+      web3jsNftInstructions.forEach((instruction, index) => {
         console.log(`Instruction ${index + 1}: `, instruction);
         const txInstruction = new TransactionInstruction({
           keys: instruction.keys.map((key) => ({
@@ -172,20 +210,7 @@ export async function POST(request: Request) {
         tx.add(txInstruction);
       });
 
-    //  Validate Mint Account Initialization
-    const createMintAccountInstruction = SystemProgram.createAccount({
-      fromPubkey: userPubkey,
-      newAccountPubkey: new PublicKey(mint.publicKey),
-      space: 82, // Size of a token mint account
-      lamports: await connection.getMinimumBalanceForRentExemption(82),
-      programId: TOKEN_PROGRAM_ID,
-    });
-    
-    tx.add(createMintAccountInstruction);
-
       transactionCompleted = false;
-      console.log("TX Instructions",tx.instructions);
-      console.log("Transaction: ", tx);
       console.log("Transaction prepared for NFT minting.");
     } catch (error) {
       console.error("Minting error: ", error);
