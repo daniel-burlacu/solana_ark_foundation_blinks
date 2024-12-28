@@ -1,17 +1,13 @@
 import {
-  Action,
   ActionGetResponse,
   ActionPostRequest,
   ActionPostResponse,
-  CompletedAction,
   createActionHeaders,
   createPostResponse,
 } from "@solana/actions";
 import {
-  Account,
   clusterApiUrl,
   Connection,
-  Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
@@ -19,29 +15,30 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { 
-  // Keypairs
-  fromWeb3JsKeypair, toWeb3JsKeypair,
-  // Publickey
-  fromWeb3JsPublicKey, toWeb3JsPublicKey,
-  // Instructions
-  fromWeb3JsInstruction, toWeb3JsInstruction,
-  // Legacy Transactions
-  fromWeb3JsLegacyTransaction, toWeb3JsLegacyTransaction,
-  // Versioned Transactions
-  fromWeb3JsTransaction, toWeb3JsTransaction, 
-  // Messages
-  fromWeb3JsMessage, toWeb3JsMessage, toWeb3JsMessageFromInput
+  toWeb3JsInstruction
+  // // Keypairs
+  // fromWeb3JsKeypair, toWeb3JsKeypair,
+  // // Publickey
+  // fromWeb3JsPublicKey, toWeb3JsPublicKey,
+  // // Instructions
+  // fromWeb3JsInstruction, 
+  // // Legacy Transactions
+  // fromWeb3JsLegacyTransaction, toWeb3JsLegacyTransaction,
+  // // Versioned Transactions
+  // fromWeb3JsTransaction, toWeb3JsTransaction, 
+  // // Messages
+  // fromWeb3JsMessage, toWeb3JsMessage, toWeb3JsMessageFromInput
 } from '@metaplex-foundation/umi-web3js-adapters';
 import { ACTIONS_CORS_HEADERS } from "./const";
-import wallet from "/home/daniel/.solana/.config/keypari.json";
+// import wallet from "/home/daniel/.solana/.config/keypari.json";
 // import { mintNFTForUser } from "../nft/nft_mint_wallet";
-import { mintNFTForUser } from "../nft/nft_mint";
+// import { mintNFTForUser } from "../nft/nft_mint";
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
-import { createNoopSigner , createSignerFromKeypair, publicKey, transactionBuilder } from "@metaplex-foundation/umi"
-import { createNft, InstructionNotSupportedError, Key, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
+import { createNoopSigner, publicKey} from "@metaplex-foundation/umi"
+import { createNft, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import { generateSigner, percentAmount, signerIdentity } from "@metaplex-foundation/umi";
-import base58 from "bs58";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+// import base58 from "bs58";
+// import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 let transactionCompleted = false; // Global boolean state
 
@@ -144,6 +141,7 @@ export async function POST(request: Request) {
   const tx = new Transaction();
   tx.feePayer = userPubkey;
   console.log("Fee Payer: ", tx.feePayer.toBase58());
+
   // Fetch the latest blockhash
   const { blockhash } = await connection.getLatestBlockhash({ commitment: "finalized" });
   tx.recentBlockhash = blockhash;
@@ -183,6 +181,7 @@ export async function POST(request: Request) {
       // let result = await nftBuilder.sendAndConfirm(umi);
       // const signature = base58.encode(result.signature);
 
+      //getting the instructions from the NFT
        const nftInstructions = nftBuilder.getInstructions();
 
        console.log("NFT Instructions: ", nftInstructions);
@@ -196,6 +195,7 @@ export async function POST(request: Request) {
       // console.log("NFT Instructions from Web3JS: ", nftInstructionsFromWeb3Js);
 
       // Add the instructions to the transaction
+      //here something is failing, is either the conversion or the transaction
       web3jsNftInstructions.forEach((instruction, index) => {
         console.log(`Instruction ${index + 1}: `, instruction);
         const txInstruction = new TransactionInstruction({
