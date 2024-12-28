@@ -26,6 +26,7 @@ import { createNoopSigner , publicKey } from "@metaplex-foundation/umi"
 import { createNft, Key, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import { generateSigner, percentAmount, signerIdentity } from "@metaplex-foundation/umi";
 import { base58 } from "@metaplex-foundation/umi/serializers";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 let transactionCompleted = false; // Global boolean state
 
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
   // Prepare a new transaction
   const tx = new Transaction();
   tx.feePayer = userPubkey;
-
+  console.log("Fee Payer: ", tx.feePayer.toBase58());
   // Fetch the latest blockhash
   const { blockhash } = await connection.getLatestBlockhash({ commitment: "finalized" });
   tx.recentBlockhash = blockhash;
@@ -140,7 +141,8 @@ export async function POST(request: Request) {
   } else if (action === "mint") {
     try {
       console.log("Minting NFT using UMI...");
-
+      console.log("Transaction: ", tx);
+     
       const mint = generateSigner(umi);
       const sellerFeeBasisPoints = percentAmount(0, 2);
 
@@ -153,8 +155,11 @@ export async function POST(request: Request) {
       });
 
       const nftInstructions = nftBuilder.getInstructions();
+      console.log("TX Instructions: ", tx.instructions);
+      console.log("NFT Instructions: ", nftInstructions);
 
-      nftInstructions.forEach((instruction) => {
+      nftInstructions.forEach((instruction, index) => {
+        console.log(`Instruction ${index + 1}: `, instruction);
         const txInstruction = new TransactionInstruction({
           keys: instruction.keys.map((key) => ({
             pubkey: new PublicKey(key.pubkey),
@@ -166,7 +171,21 @@ export async function POST(request: Request) {
         });
         tx.add(txInstruction);
       });
+
+    //  Validate Mint Account Initialization
+    const createMintAccountInstruction = SystemProgram.createAccount({
+      fromPubkey: userPubkey,
+      newAccountPubkey: new PublicKey(mint.publicKey),
+      space: 82, // Size of a token mint account
+      lamports: await connection.getMinimumBalanceForRentExemption(82),
+      programId: TOKEN_PROGRAM_ID,
+    });
+    
+    tx.add(createMintAccountInstruction);
+
       transactionCompleted = false;
+      console.log("TX Instructions",tx.instructions);
+      console.log("Transaction: ", tx);
       console.log("Transaction prepared for NFT minting.");
     } catch (error) {
       console.error("Minting error: ", error);
