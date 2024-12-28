@@ -5,8 +5,6 @@ import {
   signerIdentity,
   generateSigner,
   percentAmount,
-  TransactionBuilder,
-  Umi,
 } from "@metaplex-foundation/umi";
 import {
   createNft,
@@ -34,7 +32,7 @@ export async function mintNFTForUser(
   uri: string,
   symbol: string,
   fee: number = 0
-): Promise<{ tx: TransactionBuilder, umi:Umi}> {
+): Promise<{ signature: string; mintAddress: string }> {
   try {
     let keypair = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(wallet));
     const myKeypairSigner = createSignerFromKeypair(umi, keypair);
@@ -53,9 +51,21 @@ export async function mintNFTForUser(
       uri,
       sellerFeeBasisPoints,
     });
-    
+    let result = await tx.sendAndConfirm(umi);
+    const signature = base58.encode(result.signature);
+
+    console.log(
+      `Succesfully Minted! Check out your TX here:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`
+    );
+    // https://explorer.solana.com/address/${mint.publicKey}
+    console.log(
+      "Mint Address: ",
+      `https://explorer.solana.com/address/${mint.publicKey}?cluster=devnet`
+    );
+
     return {
-        tx, umi
+      signature,
+      mintAddress: mint.publicKey,
     };
   } catch (error) {
     console.error("Error minting NFT:", error);

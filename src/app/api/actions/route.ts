@@ -5,17 +5,27 @@ import {
   ActionPostResponse,
   CompletedAction,
   createActionHeaders,
+  createPostResponse,
 } from "@solana/actions";
 import {
+  Account,
   clusterApiUrl,
   Connection,
+  Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
   Transaction,
+  TransactionInstruction,
 } from "@solana/web3.js";
 import { ACTIONS_CORS_HEADERS } from "./const";
+// import { mintNFTForUser } from "../nft/nft_mint_wallet";
 import { mintNFTForUser } from "../nft/nft_mint";
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults"
+import { createNoopSigner , publicKey } from "@metaplex-foundation/umi"
+import { createNft, Key, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
+import { generateSigner, percentAmount, signerIdentity } from "@metaplex-foundation/umi";
+import { base58 } from "@metaplex-foundation/umi/serializers";
 
 let transactionCompleted = false; // Global boolean state
 
@@ -24,7 +34,7 @@ export async function GET(request: Request) {
 
   const responseBody: ActionGetResponse = transactionCompleted
     ? {
-        icon: "https://bafybeibqfafl757oc2ts3dnyxpapq7fthx2og2kod4cd3yeysm7q6hxaxq.ipfs.flk-ipfs.xyz",
+        icon: "https://bafkreibllcqfjk5ch26tdq7sqotkq3xxlymivip6ta7rdjhaf2qccnzc7u.ipfs.flk-ipfs.xyz",
         description: "Thank you for your donation! You can now mint your NFT.",
         title: "Solana Ark Foundation Supporter",
         label: "Mint an NFT",
@@ -39,7 +49,8 @@ export async function GET(request: Request) {
         },
       }
     : {
-        icon: "https://bafybeibqfafl757oc2ts3dnyxpapq7fthx2og2kod4cd3yeysm7q6hxaxq.ipfs.flk-ipfs.xyz",
+        //icon: "https://bafybeibqfafl757oc2ts3dnyxpapq7fthx2og2kod4cd3yeysm7q6hxaxq.ipfs.flk-ipfs.xyz",
+        icon: "https://bafkreibllcqfjk5ch26tdq7sqotkq3xxlymivip6ta7rdjhaf2qccnzc7u.ipfs.flk-ipfs.xyz",
         description:
           "The time to act is now! ... before their silence becomes our legacy.",
         title: "Solana Ark Foundation Supporter",
@@ -78,131 +89,133 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const requestBody: ActionPostRequest = await request.json();
-  const userPubkey = requestBody.account;
+  let userPubkey: PublicKey;
+
+  try {
+    userPubkey = new PublicKey(requestBody.account);
+  } catch (err) {
+    return new Response('Invalid "account" provided', {
+      status: 400,
+      headers: ACTIONS_CORS_HEADERS,
+    });
+  }
 
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
   const param = url.searchParams.get("amount");
 
-  if (
-    (param === undefined || param === "0" || param === "") &&
-    action === "send"
-  ) {
-    return Response.json("400", { headers: ACTIONS_CORS_HEADERS });
-  }
+  const RPC_ENDPOINT = "https://api.devnet.solana.com";
+  const umi = createUmi(RPC_ENDPOINT);
 
-  const amountInSOL = parseFloat(param || "0");
-
-  const lamports = Math.round(amountInSOL * LAMPORTS_PER_SOL);
-  const user = new PublicKey(userPubkey);
+  // Create a no-op signer using the user's public key
+  const signer = createNoopSigner(publicKey(userPubkey.toBase58()));
+  umi.use(signerIdentity(signer));
+  umi.use(mplTokenMetadata());
 
   const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 
-  const ix005 = SystemProgram.transfer({
-    fromPubkey: user,
-    toPubkey: new PublicKey("BN8LeCtMenajmBbzRKqkPFcP2hAJjrtCFfd4XmUqxJ9G"),
-    lamports: 50000000,
-  });
-
-  const ix1 = SystemProgram.transfer({
-    fromPubkey: user,
-    toPubkey: new PublicKey("BN8LeCtMenajmBbzRKqkPFcP2hAJjrtCFfd4XmUqxJ9G"),
-    lamports: 1000000000,
-  });
-
-  const ixParam = SystemProgram.transfer({
-    fromPubkey: user,
-    toPubkey: new PublicKey("BN8LeCtMenajmBbzRKqkPFcP2hAJjrtCFfd4XmUqxJ9G"),
-    lamports,
-  });
-
+  // Prepare a new transaction
   const tx = new Transaction();
+  tx.feePayer = userPubkey;
 
-  if (action === "send0.05") {
-    tx.add(ix005);
-  } else if (action === "send1") {
-    tx.add(ix1);
-  } else if (action === "send") {
-    tx.add(ixParam);
+  // Fetch the latest blockhash
+  const { blockhash } = await connection.getLatestBlockhash({ commitment: "finalized" });
+  tx.recentBlockhash = blockhash;
+
+  // Handle action types
+  if (action === "send0.05" || action === "send1" || action === "send") {
+    const lamports = action === "send0.05"
+      ? 50000000
+      : action === "send1"
+      ? 1000000000
+      : Math.round(parseFloat(param || "0") * LAMPORTS_PER_SOL);
+
+    const transferInstruction = SystemProgram.transfer({
+      fromPubkey: userPubkey,
+      toPubkey: new PublicKey("BN8LeCtMenajmBbzRKqkPFcP2hAJjrtCFfd4XmUqxJ9G"),
+      lamports,
+    });
+
+    tx.add(transferInstruction);
   } else if (action === "mint") {
     try {
-      await mintNFTForUser(
-        user,
-        "SAF Supporter Badge",
-        "https://devnet.irys.xyz/HAPEvLR5G53363X2Lu3XA8YsC661ejs8kC65VgVcAs1a",
-        "SAF",
-        0
-      );
-  
-      const responseBody: ActionPostResponse = {
-        type: "transaction",
-        transaction: "Mint process initiated.",
-        message: "NFT minting completed successfully!",
-      };
-  
-      return new Response(JSON.stringify(responseBody), {
-        headers: ACTIONS_CORS_HEADERS ,
+      console.log("Minting NFT using UMI...");
+
+      const mint = generateSigner(umi);
+      const sellerFeeBasisPoints = percentAmount(0, 2);
+
+      const nftBuilder = createNft(umi, {
+        mint,
+        name: "SAF Supporter Badge",
+        symbol: "SAF",
+        uri: "https://devnet.irys.xyz/HAPEvLR5G53363X2Lu3XA8YsC661ejs8kC65VgVcAs1a",
+        sellerFeeBasisPoints,
       });
+
+      const nftInstructions = nftBuilder.getInstructions();
+
+      nftInstructions.forEach((instruction) => {
+        const txInstruction = new TransactionInstruction({
+          keys: instruction.keys.map((key) => ({
+            pubkey: new PublicKey(key.pubkey),
+            isSigner: key.isSigner,
+            isWritable: key.isWritable,
+          })),
+          programId: new PublicKey(instruction.programId),
+          data: Buffer.from(instruction.data),
+        });
+        tx.add(txInstruction);
+      });
+      transactionCompleted = false;
+      console.log("Transaction prepared for NFT minting.");
     } catch (error) {
+      console.error("Minting error: ", error);
       return new Response(
         JSON.stringify({
           error: "Minting error",
-          details: (error as Error).message,
+          details: (error instanceof Error) ? error.message : "Unknown error",
         }),
-        {
-          status: 500,
-          headers: ACTIONS_CORS_HEADERS ,
-        }
+        { status: 500, headers: ACTIONS_CORS_HEADERS }
       );
     }
   } else {
     return Response.json("400", { headers: ACTIONS_CORS_HEADERS });
   }
 
-  tx.feePayer = user;
-  const bh = (await connection.getLatestBlockhash({ commitment: "finalized" }))
-    .blockhash;
-  tx.recentBlockhash = bh;
-  const serialTx = tx
-    .serialize({ requireAllSignatures: false, verifySignatures: false })
-    .toString("base64");
-
   try {
     // Simulate transaction processing
     if (action.startsWith("send")) {
       transactionCompleted = true; // Update the global state
 
-      // Define the mint action
-
-      const mintAction: Action | CompletedAction = {
-        type: "action",
-        label: "Mint NFT",
-        title: "Mint SAF Supporter NFT",
-        description: "Mint your Solana Ark Foundation Supporter Badge.",
-        links: {
-          actions: [
-            {
-              type: "transaction",
-              label: "Mint NFT",
-              parameters: [],
-              href: "",
+      const responseBody: ActionPostResponse =await createPostResponse({
+        fields:{
+          type: "transaction",
+          transaction: tx,
+          message: "Donation successful! Proceed to mint your NFT.",
+          links: {
+            next: {
+              type: "inline",
+              action: {
+                type: "action",
+                icon: "https://bafybeibqfafl757oc2ts3dnyxpapq7fthx2og2kod4cd3yeysm7q6hxaxq.ipfs.flk-ipfs.xyz",
+                label: "Mint NFT",
+                title: "Mint SAF Supporter NFT",
+                disabled: false,
+                description: "Mint your Solana Ark Foundation Supporter Badge.",
+                links:{
+                  actions: [
+                    {
+                      type: "transaction",
+                      label: "Mint NFT",
+                      href: url.origin + "/api/actions?action=mint",
+                    },
+                  ],
+                }
+              },
             },
-          ],
-        },
-        icon: "",
-      };
-
-      const responseBody: ActionPostResponse = {
-        type: "transaction",
-        transaction: serialTx,
-        message: "Donation successful! Proceed to mint your NFT.",
-        links: {
-          next: {
-            type: "inline",
-            action: mintAction,
           },
-        },
-      };
+        }
+      });
 
       return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
     }
@@ -212,48 +225,27 @@ export async function POST(request: Request) {
       { headers: ACTIONS_CORS_HEADERS }
     );
   }
+  // Serialize the transaction
+  const serializedTx = tx
+    .serialize({
+      requireAllSignatures: false, // Let Blink handle the signing
+      verifySignatures: false,
+    })
+    .toString("base64");
 
-  const responseBody: ActionPostResponse = {
+  console.log("Serialized Transaction: ", serializedTx);
+
+  // Return the serialized transaction for Blink to sign
+  return Response.json({
     type: "transaction",
-    transaction: serialTx,
-    message: "Transaction completed.",
-  };
-
-  return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
+    transaction: serializedTx,
+    message: "Transaction prepared and serialized successfully.",
+  }, { headers: ACTIONS_CORS_HEADERS });
 }
+
 
 export const OPTIONS = async (req: Request) => {
   const headers = createActionHeaders();
   
   return new Response(null, { headers }); // CORS headers here
 };
-// export const OPTIONS = async () =>
-//   Response.json(null, { headers: ACTIONS_CORS_HEADERS });
-
-// function validatedQueryParams(requestUrl: URL) {
-//   let toPubkey: PublicKey = DEFAULT_SOL_ADDRESS;
-//   let amount: number = DEFAULT_SOL_AMOUNT;
-
-//   try {
-//     if (requestUrl.searchParams.get("to")) {
-//       toPubkey = new PublicKey(requestUrl.searchParams.get("to")!);
-//     }
-//   } catch (err) {
-//     throw "Invalid input query parameter: to";
-//   }
-
-//   try {
-//     if (requestUrl.searchParams.get("amount")) {
-//       amount = parseFloat(requestUrl.searchParams.get("amount")!);
-//     }
-
-//     if (amount <= 0) throw "amount is too small";
-//   } catch (err) {
-//     throw "Invalid input query parameter: amount";
-//   }
-
-//   return {
-//     amount,
-//     toPubkey,
-//   };
-// }
