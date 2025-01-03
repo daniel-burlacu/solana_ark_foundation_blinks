@@ -14,7 +14,7 @@ import {
 } from "@metaplex-foundation/mpl-token-metadata";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import wallet from "/home/daniel/.solana/.config/keypari.json";
-import base58 from "bs58";
+
 
 const RPC_ENDPOINT = "https://api.devnet.solana.com";
 const umi = createUmi(RPC_ENDPOINT);

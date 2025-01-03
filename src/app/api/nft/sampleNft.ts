@@ -41,8 +41,6 @@ export async function mintNFTForUser(
 
     const mint = generateSigner(umi);
     const sellerFeeBasisPoints = percentAmount(fee, 2);
-    // const description = "Dogpound Charity NFT - A Sol for a Bone !";
-    // const image = "https://arweave.net/zpBs5PJR2eVwT2hGoMZg9aFbBu2MEYuKRwGnHkX3eAb";
 
     let tx = createNft(umi, {
       mint,
