@@ -34,9 +34,4 @@ export const GET = async () => {
 
 // DO NOT FORGET TO INCLUDE THE `OPTIONS` HTTP METHOD
 // THIS WILL ENSURE CORS WORKS FOR BLINKS
-export const OPTIONS = () => {
-  return Response.json(null, {
-      status: 204,
-      headers: ACTIONS_CORS_HEADERS,
-  });
-};
+export const OPTIONS = GET;
