@@ -11,7 +11,7 @@ export const DEFAULT_SOL_ADDRESS: PublicKey = new PublicKey(
 // };
 
 // const CLUSTER = process.env.NEXT_PUBLIC_CLUSTER || "devnet"; // Use "mainnet" for production
-export const ACTIONS_CORS_HEADERS = {
+const ACTIONS_CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
