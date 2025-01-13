@@ -191,6 +191,7 @@ export async function POST(request: Request) {
     });
 
     tx.add(transferInstruction);
+    
   } else if (action === "mint") {
     try {
     
@@ -345,7 +346,23 @@ export async function POST(request: Request) {
         },
       });
 
-      return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
+        // Serialize the transaction
+  const serializedTx = tx
+  .serialize({
+    requireAllSignatures: false, // Let Blink handle the signing
+    verifySignatures: false,
+  })
+  .toString("base64");
+
+//     const retryTxId = await connection.sendRawTransaction(Buffer.from(serializedTx, 'base64'));
+// console.log("Retry Transaction ID:", retryTxId);
+
+console.log("Serialized Transaction: ", serializedTx);
+
+// Return the serialized transaction for Blink to sign
+
+
+return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
     }
   } catch (error) {
     return Response.json(
@@ -354,28 +371,7 @@ export async function POST(request: Request) {
     );
   }
   
-  // Serialize the transaction
-  const serializedTx = tx
-    .serialize({
-      requireAllSignatures: false, // Let Blink handle the signing
-      verifySignatures: false,
-    })
-    .toString("base64");
 
-  //     const retryTxId = await connection.sendRawTransaction(Buffer.from(serializedTx, 'base64'));
-  // console.log("Retry Transaction ID:", retryTxId);
-
-  console.log("Serialized Transaction: ", serializedTx);
-
-  // Return the serialized transaction for Blink to sign
-  return Response.json(
-    {
-      type: "transaction",
-      transaction: serializedTx,
-      message: "Transaction prepared and serialized successfully.",
-    },
-    { headers: ACTIONS_CORS_HEADERS }
-  );
 }
 
 export const OPTIONS = async () => {
