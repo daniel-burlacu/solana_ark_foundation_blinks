@@ -44,6 +44,9 @@ import {
 
 let transactionCompleted = false; // Global boolean state
 
+const wKeyTest = Keypair.fromSecretKey(new Uint8Array(wallet));
+console.log("Wallet address is :", wKeyTest.publicKey.toBase58());
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
 
