@@ -191,11 +191,51 @@ export async function POST(request: Request) {
     });
 
     tx.add(transferInstruction);
+
+    const responseBody: ActionPostResponse = await createPostResponse({
+      fields: {
+        type: "transaction",
+        transaction: tx,
+        message: "Donation successful ! You can now proceed to mint your NFT Supporter Badge. Please note, transaction fees will be covered by you to complete the minting process.",
+        links: {
+          next: {
+            type: "inline",
+            action: {
+              type: "action",
+              icon: "https://bafybeibqfafl757oc2ts3dnyxpapq7fthx2og2kod4cd3yeysm7q6hxaxq.ipfs.flk-ipfs.xyz",
+              label: "Mint NFT",
+              title: "Mint SAF Supporter Badge NFT",
+              disabled: false,
+              description: "Mint your Solana Ark Foundation Supporter Badge.",
+              links: {
+                actions: [
+                  {
+                    type: "transaction",
+                    label: "Mint NFT",
+                    href: url.origin + "/api/actions?action=mint",
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    });
+
+const serializedTx = tx
+.serialize({
+  requireAllSignatures: false, // Let Blink handle the signing
+  verifySignatures: false,
+})
+.toString("base64");
+
+console.log("Serialized Transaction: ", serializedTx);
+
+return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
     
   } else if (action === "mint") {
     try {
     
-
       // Extract instructions from the NFT builder
       const instructions = nftBuilder.getInstructions();
 
@@ -310,68 +350,6 @@ export async function POST(request: Request) {
   }else {
     return Response.json("400", { headers: ACTIONS_CORS_HEADERS });
   }
-
-  try {
-    // Simulate transaction processing
-    if (action.startsWith("send")) {
-      transactionCompleted = true; // Update the global state
-
-      const responseBody: ActionPostResponse = await createPostResponse({
-        fields: {
-          type: "transaction",
-          transaction: tx,
-          message: "Donation successful ! You can now proceed to mint your NFT Supporter Badge. Please note, transaction fees will be covered by you to complete the minting process.",
-          links: {
-            next: {
-              type: "inline",
-              action: {
-                type: "action",
-                icon: "https://bafybeibqfafl757oc2ts3dnyxpapq7fthx2og2kod4cd3yeysm7q6hxaxq.ipfs.flk-ipfs.xyz",
-                label: "Mint NFT",
-                title: "Mint SAF Supporter Badge NFT",
-                disabled: false,
-                description: "Mint your Solana Ark Foundation Supporter Badge.",
-                links: {
-                  actions: [
-                    {
-                      type: "transaction",
-                      label: "Mint NFT",
-                      href: url.origin + "/api/actions?action=mint",
-                    },
-                  ],
-                },
-              },
-            },
-          },
-        },
-      });
-
-        // Serialize the transaction
-  const serializedTx = tx
-  .serialize({
-    requireAllSignatures: false, // Let Blink handle the signing
-    verifySignatures: false,
-  })
-  .toString("base64");
-
-//     const retryTxId = await connection.sendRawTransaction(Buffer.from(serializedTx, 'base64'));
-// console.log("Retry Transaction ID:", retryTxId);
-
-console.log("Serialized Transaction: ", serializedTx);
-
-// Return the serialized transaction for Blink to sign
-
-
-return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
-    }
-  } catch (error) {
-    return Response.json(
-      { error: "Transaction error", details: (error as any).message },
-      { headers: ACTIONS_CORS_HEADERS }
-    );
-  }
-  
-
 }
 
 export const OPTIONS = async () => {
