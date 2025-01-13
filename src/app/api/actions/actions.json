@@ -14,6 +14,11 @@
         "type": "transaction",
         "label": "Mint NFT",
         "href": "/api/actions?action=mint"
+      },
+      {
+        "type": "transaction",
+        "label": "Mint NFT",
+        "href": "/api/actions?action=feePayed"
       }
     ]
   }
