@@ -1,14 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    async redirects() {
-        return [
-            {
-                source: '/actions.json', // The requested path
-                destination: '/api/actions', // Redirect to the correct API route
-                permanent: true, // Indicates a permanent redirect (useful for SEO caching)
-            },
-        ];
+    async headers() {
+      return [
+        {
+          source: "/actions.json",
+          headers: [
+            { key: "Access-Control-Allow-Origin", value: "*" },
+            { key: "Access-Control-Allow-Methods", value: "GET, POST, OPTIONS" },
+            { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
+            { key: "Access-Control-Max-Age", value: "86400" },
+          ],
+        },
+      ];
     },
-};
-
-export default nextConfig;
+  };
+  
+  export default nextConfig;

@@ -1,10 +1,7 @@
 import {
-  Action,
   ActionGetResponse,
   ActionPostRequest,
   ActionPostResponse,
-  CompletedAction,
-  createActionHeaders,
   createPostResponse,
 } from "@solana/actions";
 import {
@@ -15,84 +12,35 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
-  TransactionInstruction,
 } from "@solana/web3.js";
 import {
   toWeb3JsInstruction,
-  toWeb3JsPublicKey,
-  // // Keypairs
-  // fromWeb3JsKeypair, toWeb3JsKeypair,
-  // // Publickey
-  // fromWeb3JsPublicKey, toWeb3JsPublicKey,
-  // // Instructions
-  // fromWeb3JsInstruction,
-  // // Legacy Transactions
-  // fromWeb3JsLegacyTransaction, toWeb3JsLegacyTransaction,
-  // // Versioned Transactions
-  // fromWeb3JsTransaction, toWeb3JsTransaction,
-  // // Messages
-  // fromWeb3JsMessage, toWeb3JsMessage, toWeb3JsMessageFromInput
 } from "@metaplex-foundation/umi-web3js-adapters";
-import {
-  fetchToken,
-  transferTokens,
-  findAssociatedTokenPda,
-  mintTokensTo,
-  createAssociatedToken,
-  createMint,
-  createMintWithAssociatedToken,
-} from "@metaplex-foundation/mpl-toolbox";
 import { ACTIONS_CORS_HEADERS } from "./const";
-import wallet from "/home/daniel/.solana/.config/localwallet.json";
+// import wallet from "/home/daniel/.solana/.config/localwallet.json";
+const wallet = JSON.parse(process.env.KEY_WALLET || '[]');
 // import { mintNFTForUser } from "../nft/nft_mint_wallet";
 // import { mintNFTForUser } from "../nft/nft_mint";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
-  createNoopSigner,
   createSignerFromKeypair,
-  KeypairSigner,
   none,
-  publicKey,
-  transactionBuilder,
-  Umi,
 } from "@metaplex-foundation/umi";
 import {
-  createMetadataAccountV3,
   createNft,
   mplTokenMetadata,
-  TokenStandard,
 } from "@metaplex-foundation/mpl-token-metadata";
 import {
   generateSigner,
   percentAmount,
   signerIdentity,
 } from "@metaplex-foundation/umi";
+
 import {
-  createCollection,
-  create,
-  fetchCollection,
-  fetchAssetV1,
-} from "@metaplex-foundation/mpl-core";
-import { transferV1 } from "@metaplex-foundation/mpl-token-metadata";
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  createAssociatedTokenAccountInstruction,
-  createInitializeMintInstruction,
-  createMintToInstruction,
   createTransferInstruction,
-  ExtensionType,
   getAssociatedTokenAddress,
-  getMintLen,
   getOrCreateAssociatedTokenAccount,
-  LENGTH_SIZE,
-  mintTo,
-  TOKEN_PROGRAM_ID,
-  TYPE_SIZE,
 } from "@solana/spl-token";
-import { Console } from "console";
-import base58 from "bs58";
-// import base58 from "bs58";
-// import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 let transactionCompleted = false; // Global boolean state
 
@@ -157,7 +105,6 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const requestBody: ActionPostRequest = await request.json();
   let userPubkey: PublicKey;
-
   try {
     userPubkey = new PublicKey(requestBody.account);
   } catch (err) {
@@ -255,8 +202,6 @@ export async function POST(request: Request) {
 
       const transactionNFTFee = await estimateTransactionCost(connection, tx);
       
-      // Step 4: Transfer the NFT
-      console.log("Transferring NFT...");
       const transferTx = await transferNFT(
         connection,
         Gkeypair, // Payer Keypair
@@ -309,14 +254,13 @@ export async function POST(request: Request) {
                 label: "NFT Minted completed !",
                 title: "NFT Minted Successfully !",
                 disabled: false,
-                description: "You can transfer it to your wallet now. Transfer is free of charge !",
+                description: "You can now proceed to transfer the NFT to your wallet. Transfer is free of charge, transaction fees are on us !",
                 links: {
                   actions: [
                     {
                       type: "transaction",
                       label: "Transfer NFT !",
                       href: "/api/actions?action=feePayed",
-                      
                     },
                   ],
                 },
@@ -325,7 +269,7 @@ export async function POST(request: Request) {
           },
         },
       });
-      
+    
        return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
     } catch (error) {
       console.error("Minting error: ", error);
@@ -338,6 +282,7 @@ export async function POST(request: Request) {
       );
     }
   } else if(action ===  "feePayed"){
+
     console.log("Executing the rest of the transaction !")
 
     umi.use(signerIdentity(signer));
@@ -352,17 +297,12 @@ export async function POST(request: Request) {
       true
     );
 
-    // const responseBody: ActionPostResponse = ({
-    //   type: 'post',
-    //   links: {
-    //     next: {
-    //       type: 'post',
-    //       href: `/api/actions`,
-    //     },
-    //   },
-    // }satisfies ActionPostResponse);
+    const response = ({
+        type: 'post',
+        message:'Thank you for your donation! You can now check your wallet.',
+      } satisfies ActionPostResponse);
     
-     return Response.json("Testin 123", { headers: ACTIONS_CORS_HEADERS });
+     return Response.json(response, { headers: ACTIONS_CORS_HEADERS });
   }else {
     return Response.json("400", { headers: ACTIONS_CORS_HEADERS });
   }
@@ -376,7 +316,7 @@ export async function POST(request: Request) {
         fields: {
           type: "transaction",
           transaction: tx,
-          message: "Donation successful! Proceed to mint your NFT.",
+          message: "Donation successful ! You can now proceed to mint your NFT Supporter Badge. Please note, transaction fees will be covered by you to complete the minting process.",
           links: {
             next: {
               type: "inline",
@@ -384,7 +324,7 @@ export async function POST(request: Request) {
                 type: "action",
                 icon: "https://bafybeibqfafl757oc2ts3dnyxpapq7fthx2og2kod4cd3yeysm7q6hxaxq.ipfs.flk-ipfs.xyz",
                 label: "Mint NFT",
-                title: "Mint SAF Supporter NFT",
+                title: "Mint SAF Supporter Badge NFT",
                 disabled: false,
                 description: "Mint your Solana Ark Foundation Supporter Badge.",
                 links: {
@@ -410,6 +350,7 @@ export async function POST(request: Request) {
       { headers: ACTIONS_CORS_HEADERS }
     );
   }
+  
   // Serialize the transaction
   const serializedTx = tx
     .serialize({
@@ -434,10 +375,9 @@ export async function POST(request: Request) {
   );
 }
 
-export const OPTIONS = async (req: Request) => {
-  const headers = createActionHeaders();
+export const OPTIONS = async () => {
 
-  return new Response(null, { headers }); // CORS headers here
+  return new Response(null,{ headers: ACTIONS_CORS_HEADERS }); // CORS headers here
 };
 
 async function transferNFT(

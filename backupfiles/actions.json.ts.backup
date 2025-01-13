@@ -1,0 +1,52 @@
+import { NextApiRequest, NextApiResponse } from 'next';
+
+export const ACTIONS_CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "86400",
+    "X-Action-Version": "1",
+    "X-Blockchain-Ids":"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", //mainnet - solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp 
+    "chainId":"devnet"
+   // "X-Blockchain-Ids": `solana:${CLUSTER}`, // Dynamically set based on the cluster
+  };
+
+  export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    // Apply CORS headers
+    Object.entries(ACTIONS_CORS_HEADERS).forEach(([key, value]) => {
+      res.setHeader(key, value);
+    });
+  
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+      res.status(204).end(); // Respond with no content for preflight
+      return;
+    }
+  
+    // Handle GET request
+    if (req.method === 'GET') {
+      res.status(200).json({
+        actions: [
+          {
+            type: 'transaction',
+            label: 'Send 0.05 Sol',
+            href: '/api/actions?action=send0.05',
+          },
+          {
+            type: 'transaction',
+            label: 'Send 1 Sol',
+            href: '/api/actions?action=send1',
+          },
+          {
+            type: 'transaction',
+            label: 'Mint NFT',
+            href: '/api/actions?action=mint',
+          },
+        ],
+      });
+      return;
+    }
+  
+    // Handle unsupported methods
+    res.status(405).end(); // Method not allowed 
+  }
