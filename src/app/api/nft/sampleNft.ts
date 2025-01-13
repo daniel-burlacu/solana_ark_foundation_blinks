@@ -1,5 +1,4 @@
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
-import * as fs from "fs";
 import {
   createSignerFromKeypair,
   signerIdentity,
@@ -10,8 +9,9 @@ import {
   createNft,
   mplTokenMetadata,
 } from "@metaplex-foundation/mpl-token-metadata";
-import { PublicKey, Transaction } from "@solana/web3.js";
-import wallet from "/home/daniel/.solana/.config/keypari.json";
+import { PublicKey } from "@solana/web3.js";
+// import wallet from "/home/daniel/.solana/.config/keypari.json";
+const wallet = JSON.parse(process.env.KEY_WALLET || '[]');
 import base58 from "bs58";
 
 const RPC_ENDPOINT = "https://api.devnet.solana.com";
