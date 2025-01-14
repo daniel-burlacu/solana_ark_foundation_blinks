@@ -18,14 +18,18 @@ export const GET = async () => {
     ],
   };
 
-  return Response.json(payload, {
+  return new NextResponse(JSON.stringify({ message: "Success", payload }), {
     headers: ACTIONS_CORS_HEADERS,
   });
 };
 
-// DO NOT FORGET TO INCLUDE THE `OPTIONS` HTTP METHOD
-// THIS WILL ENSURE CORS WORKS FOR BLINKS
-export const OPTIONS = GET;
+// Handle OPTIONS requests for preflight
+export const OPTIONS = () => {
+  return new NextResponse(null, {
+      status: 204,
+      headers: ACTIONS_CORS_HEADERS,
+  });
+};
 
 export const POST = async (req: NextRequest) => {
   try {

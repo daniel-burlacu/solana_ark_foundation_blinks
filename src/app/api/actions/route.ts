@@ -233,7 +233,7 @@ const serializedTx = tx
 
 console.log("Serialized Transaction: ", serializedTx);
 
-return Response.json(responseBody.message, { headers: ACTIONS_CORS_HEADERS });
+return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
     
   } else if (action === "mint") {
     try {
@@ -316,7 +316,7 @@ return Response.json(responseBody.message, { headers: ACTIONS_CORS_HEADERS });
         },
       });
     
-       return Response.json(responseBody.message, { headers: ACTIONS_CORS_HEADERS });
+       return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
     } catch (error) {
       console.error("Minting error: ", error);
       return new Response(
