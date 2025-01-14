@@ -3,7 +3,9 @@ import {
   ActionPostRequest,
   ActionPostResponse,
   createPostResponse,
+  ACTIONS_CORS_HEADERS
 } from "@solana/actions";
+// import { ACTIONS_CORS_HEADERS } from "./const";
 import {
   clusterApiUrl,
   Connection,
@@ -16,7 +18,7 @@ import {
 import {
   toWeb3JsInstruction,
 } from "@metaplex-foundation/umi-web3js-adapters";
-import { ACTIONS_CORS_HEADERS } from "./const";
+
 // import wallet from "/home/daniel/.solana/.config/localwallet.json";
 const wallet = JSON.parse(process.env.KEY_WALLET || '[]');
 // import { mintNFTForUser } from "../nft/nft_mint_wallet";
@@ -353,7 +355,6 @@ return Response.json(responseBody.message, { headers: ACTIONS_CORS_HEADERS });
 }
 
 export const OPTIONS = async () => {
-
   return new Response(null,{ headers: ACTIONS_CORS_HEADERS }); // CORS headers here
 };
 
