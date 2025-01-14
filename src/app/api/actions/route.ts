@@ -3,9 +3,9 @@ import {
   ActionPostRequest,
   ActionPostResponse,
   createPostResponse,
-  ACTIONS_CORS_HEADERS
+//  ACTIONS_CORS_HEADERS
 } from "@solana/actions";
-// import { ACTIONS_CORS_HEADERS } from "./const";
+ import { ACTIONS_CORS_HEADERS } from "./const";
 import {
   clusterApiUrl,
   Connection,
