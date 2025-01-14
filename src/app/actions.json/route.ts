@@ -1,4 +1,5 @@
 import {  ActionsJson } from "@solana/actions";
+import { NextRequest, NextResponse } from "next/server";
 
 const ACTIONS_CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -35,3 +36,19 @@ export const GET = async () => {
 // DO NOT FORGET TO INCLUDE THE `OPTIONS` HTTP METHOD
 // THIS WILL ENSURE CORS WORKS FOR BLINKS
 export const OPTIONS = GET;
+
+export const POST = async (req: NextRequest) => {
+  try {
+    // Your POST logic here
+    const body = await req.json();
+    return new NextResponse(JSON.stringify({ message: "Success", body }), {
+      headers: ACTIONS_CORS_HEADERS,
+    });
+  } catch (error) {
+    console.error("Error in POST handler:", error);
+    return new NextResponse(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+      headers: ACTIONS_CORS_HEADERS,
+    });
+  }
+};
