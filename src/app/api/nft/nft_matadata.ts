@@ -1,10 +1,5 @@
 // import wallet from "/home/daniel/.solana/.config/keypari.json";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
-import {
-  createGenericFile,
-  createSignerFromKeypair,
-  signerIdentity,
-} from "@metaplex-foundation/umi";
 import { irysUploader } from "@metaplex-foundation/umi-uploader-irys";
 
 // Create a devnet connection
