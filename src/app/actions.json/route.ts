@@ -1,7 +1,7 @@
 import {  ActionsJson } from "@solana/actions";
 import { NextRequest, NextResponse } from "next/server";
-import { ACTIONS_CORS_HEADERS } from "../api/actions/const";
-
+// import { ACTIONS_CORS_HEADERS } from "../api/actions/const";
+import {  ACTIONS_CORS_HEADERS } from "@solana/actions";
 export const GET = async () => {
   const payload: ActionsJson = {
     rules: [
