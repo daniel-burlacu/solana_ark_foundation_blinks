@@ -3,6 +3,7 @@ import {
   ActionPostRequest,
   ActionPostResponse,
   createPostResponse,
+  createActionHeaders
 //  ACTIONS_CORS_HEADERS
 } from "@solana/actions";
  import { ACTIONS_CORS_HEADERS } from "./const";
@@ -354,8 +355,10 @@ return Response.json(responseBody, { headers: ACTIONS_CORS_HEADERS });
   }
 }
 
-export const OPTIONS = async () => {
-  return new Response(null,{ headers: ACTIONS_CORS_HEADERS }); // CORS headers here
+export const OPTIONS = async (req: Request) => {
+  const headers = createActionHeaders();
+  
+  return new Response(null, { headers }); // CORS headers here
 };
 
 async function transferNFT(
